@@ -1,14 +1,16 @@
 # depslib dependency file v1.0
-1543477868 source:c:\d\progs\netgame\game.cpp
+1543695225 source:c:\d\progs\netgame\game.cpp
 	<SFML/Graphics.hpp>
 	<SFML/Network.hpp>
 	<iostream>
 	<cstdio>
 	<cstdlib>
 	<ctime>
+	<cmath>
 	<cstring>
 	<string>
 	<vector>
+	<list>
 	<map>
 	<algorithm>
 	<queue>
