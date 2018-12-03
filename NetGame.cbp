@@ -41,6 +41,7 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="Game.cpp" />
+		<Unit filename="input.in" />
 		<Extensions>
 			<code_completion />
 			<envvars />
