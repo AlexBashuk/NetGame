@@ -26,6 +26,7 @@ using namespace std;
 
 sf::Texture texture_bullet_1;
 sf::Texture texture_tank_1;
+sf::Texture texture_explode;
 
 const int width = 1920;
 const int height = 1200;
@@ -99,6 +100,15 @@ bool check_two_rect(pair <double, double> *a, pair <double, double> *b)
             return true;
     }
 
+    for(int i = 0; i < 4; i++)
+    {
+        double xr = a[i].X;
+        double yr = a[i].Y;
+
+        if(check_rect_and_point(b, xr, yr))
+            return true;
+    }
+
     return false;
 }
 
@@ -123,6 +133,8 @@ private:
 
 public:
     bool exist = true;
+
+    int damage;
 
     sf::RectangleShape body;
 
@@ -234,6 +246,7 @@ public:
         y = sprite.getPosition().y;// + sprite.getOrigin().y;
         //cout << x << " " << y << endl;
         type = 0;
+        damage = 5;
     }
 
     Bullet(int type0, double x0, double y0, double a0, double b0)
@@ -241,7 +254,7 @@ public:
         type = type0;
         //texture.loadFromFile("Bullets.png");
         if(type == 0 || type == 1)
-            sprite.setTexture(texture_bullet_1);
+            sprite.setTexture(texture_bullet_1), damage = 5;
         else if(type == 2)
             sprite.setTexture(texture_bullet_1);
         sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));//81, 116, 123, 163
@@ -312,10 +325,10 @@ public:
         {
             elp_t();
 
-            /*if(type == 0)
+            if(type == 0)
                 action0();
             else if(type == 1)
-                action1();*/
+                action1();
 
             //if(abs(x - sprite.getPosition().x) >= 1e-3 || abs(y - sprite.getPosition().y) >= 1e-3)
               //  cout << x << " " << y << " " << sprite.getPosition().x << " " << sprite.getPosition().y << endl;
@@ -332,6 +345,8 @@ private:
 
     int time = 0;
     int change_time = 100;
+
+    int hp = 100;
 
     double elp;
     double x;
@@ -350,6 +365,8 @@ private:
     }
 
 public:
+    bool exist = true;
+
     sf::RectangleShape body;
 
     Tank()
@@ -358,11 +375,11 @@ public:
         sprite.setTexture(texture_tank_1);
         sprite.setPosition(300, 600);
         sprite.setOrigin(256, 256);
-        sprite.scale(0.2, 0.2);
+        sprite.scale(0.1, 0.1);
         body.setSize(sf::Vector2f(512, 512));
         body.setPosition(300, 600);
         body.setOrigin(256, 256);
-        body.scale(0.2, 0.2);
+        body.scale(0.1, 0.1);
         body.setFillColor(sf::Color::Green);
         //sprite.setColor(sf::Color::Green);
         x = sprite.getPosition().x;// + (sprite.getOrigin().x)/1;
@@ -379,11 +396,11 @@ public:
         sprite.setTexture(texture_tank_1);
         sprite.setPosition(x0 - 255, y0 - 255);
         sprite.setOrigin(256, 256);
-        sprite.scale(0.2, 0.2);
+        sprite.scale(0.1, 0.1);
         body.setSize(sf::Vector2f(512, 512));
         body.setPosition(300, 600);
         body.setOrigin(256, 256);
-        body.scale(0.2, 0.2);
+        body.scale(0.1, 0.1);
         body.setFillColor(sf::Color::Green);
         x = sprite.getPosition().x;// + (sprite.getOrigin().x)/5;
         y = sprite.getPosition().y;// + (sprite.getOrigin().y)/5;
@@ -395,6 +412,16 @@ public:
             ang1 = -ang1;
         sprite.setRotation(180 * ang1 / M_PI - 90);
         body.setRotation(180 * ang1 / M_PI - 90);
+    }
+
+    void hit(int damage)
+    {
+        hp -= damage;
+        if(hp <= 0)
+        {
+            sprite.setTexture(texture_explode);
+            exist = false;
+        }
     }
 
     void set_points(pair <double, double> *arr)
@@ -411,7 +438,7 @@ public:
     void draw()
     {
         window.draw(sprite);
-        window.draw(body);
+        //window.draw(body);
     }
 
     bool check_walls()
@@ -495,7 +522,7 @@ public:
             //cout << "Hi\n";
 
             double b_x, b_y, l;
-            l = body.getSize().y * body.getScale().y/2 + 50;
+            l = body.getSize().y * body.getScale().y/2 + 15;
             b_x = x + a * l;
             b_y = y + b * l;
 
@@ -552,6 +579,7 @@ void hit_check(Tank &tank, Bullet &bullet)
 
     if(check_two_rect(a, b))
     {
+        tank.hit(bullet.damage);
         bullet.exist = false;
     }
 }
@@ -564,8 +592,9 @@ int main()
 
     texture_bullet_1.loadFromFile("Bullets.png");
     texture_tank_1.loadFromFile("Tank.png");
+    texture_explode.loadFromFile("Explode.png");
 
-    circle.setPosition(960, 600);
+    circle.setPosition(960, 500);
     circle.setFillColor(sf::Color(200, 150, 100));
     circle.setOrigin(100, 100);
 
@@ -617,7 +646,8 @@ int main()
               //  window.sbool exist = true;etSize(event.size.width, event.size.height);
         }
 
-        tank.action();
+        if(tank.exist == true)
+            tank.action();
         //bullet.action();
         //if(bullets.begin() != bullets.end())
           //  cout << "Hi\n";
@@ -626,7 +656,7 @@ int main()
             auto cur_it = it;
             it++;
             cur_it->action();
-            if((cur_it->exist) == true)
+            if((cur_it->exist) == true && tank.exist == true)
                 hit_check(tank, *cur_it);
             if((cur_it->exist) == false)
             {
@@ -662,10 +692,10 @@ int main()
         window.draw(circle);
         for(int i = 0; i < n; i++)
             window.draw(walls[i]);
+        tank.draw();
         for(auto it = bullets.begin(); it != bullets.end(); it++)
             it->draw();
         //window.draw(sprite);
-        tank.draw();
         //bullet.draw();
         window.display();
     }
