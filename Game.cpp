@@ -24,8 +24,8 @@
 
 using namespace std;
 
-sf::Texture texture_bullet_1;
-sf::Texture texture_tank_1;
+sf::Texture texture_bullets_1;
+sf::Texture texture_tank[2];
 sf::Texture texture_explode;
 
 const int width = 1920;
@@ -233,7 +233,7 @@ public:
     Bullet()
     {
         //texture.loadFromFile("Bullets.png");
-        sprite.setTexture(texture_bullet_1);
+        sprite.setTexture(texture_bullets_1);
         sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));//81, 116, 123, 163
         sprite.setPosition(300, 600);
         sprite.setOrigin(18, 20);
@@ -253,17 +253,32 @@ public:
     {
         type = type0;
         //texture.loadFromFile("Bullets.png");
-        if(type == 0 || type == 1)
-            sprite.setTexture(texture_bullet_1), damage = 5;
+        sprite.setTexture(texture_bullets_1);
+        if(type == 0)
+        {
+            //81, 125, 117, 165
+            damage = 5;
+            sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));
+        }
+        else if(type == 1)
+        {
+            //16, 125, 52, 165
+            damage = 5;
+            sprite.setTextureRect(sf::IntRect(16, 125, 36, 40));
+        }
         else if(type == 2)
-            sprite.setTexture(texture_bullet_1);
-        sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));//81, 116, 123, 163
-        sprite.setPosition(x0, y0);
-        sprite.setOrigin(18, 20);
-        sprite.scale(1, 1);
+        {
+            damage = 100;
+            sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));
+        }
+
+        //sprite.setTextureRect(sf::IntRect(81, 125, 36, 40));
         body.setSize(sf::Vector2f(18, 20));
+        sprite.setPosition(x0, y0);
         body.setPosition(x0, y0);
+        sprite.setOrigin(18, 20);
         body.setOrigin(9, 10);
+        sprite.scale(1, 1);
         //sprite.setColor(sf::Color::Green);
         x = sprite.getPosition().x;// + sprite.getOrigin().x;
         y = sprite.getPosition().y;// + sprite.getOrigin().y;
@@ -325,9 +340,9 @@ public:
         {
             elp_t();
 
-            if(type == 0)
+            if(type == -1)
                 action0();
-            else if(type == 1)
+            else if(0 <= type && type < 4)
                 action1();
 
             //if(abs(x - sprite.getPosition().x) >= 1e-3 || abs(y - sprite.getPosition().y) >= 1e-3)
@@ -347,6 +362,7 @@ private:
     int change_time = 100;
 
     int hp = 100;
+    int num, type;
 
     double elp;
     double x;
@@ -357,10 +373,12 @@ private:
     //sf::Texture texture;
     sf::Clock Clock;
     sf::Sprite sprite;
+    sf::RectangleShape cur_hp, max_hp;
 
     void elp_t()
     {
         elp = Clock.getElapsedTime().asMilliseconds();
+        elp = int(1e5 * elp)/1e5;
         Clock.restart();
     }
 
@@ -372,7 +390,8 @@ public:
     Tank()
     {
         //texture.loadFromFile("Tank.png");
-        sprite.setTexture(texture_tank_1);
+        num = type = 0;
+        sprite.setTexture(texture_tank[0]);
         sprite.setPosition(300, 600);
         sprite.setOrigin(256, 256);
         sprite.scale(0.1, 0.1);
@@ -381,29 +400,48 @@ public:
         body.setOrigin(256, 256);
         body.scale(0.1, 0.1);
         body.setFillColor(sf::Color::Green);
+        cur_hp.setPosition(30, 1085);
+        cur_hp.setSize(sf::Vector2f(500, 30));
+        cur_hp.setFillColor(sf::Color::Green);
+        max_hp.setPosition(30, 1085);
+        max_hp.setSize(sf::Vector2f(500, 30));
+        max_hp.setFillColor(sf::Color::Red);
+        //max_hp.setSize(sf::Vector2f(512 * 0.1, 512 * 0.1);
         //sprite.setColor(sf::Color::Green);
         x = sprite.getPosition().x;// + (sprite.getOrigin().x)/1;
         y = sprite.getPosition().y;// + (sprite.getOrigin().y)/1;
         //cout << x << " " << y << endl;
     }
 
-    Tank(int type, double x0, double y0, double a0, double b0)
+    Tank(int num0, int type0, double x0, double y0, double a0, double b0)
     {
         /*if(type == 0)
             texture.loadFromFile("Tank.png");
         else if(type == 1)
             texture.loadFromFile("Tank2.png");*/
-        sprite.setTexture(texture_tank_1);
-        sprite.setPosition(x0 - 255, y0 - 255);
-        sprite.setOrigin(256, 256);
-        sprite.scale(0.1, 0.1);
+        num = num0;
+        type = type0;
+        sprite.setTexture(texture_tank[type]);
         body.setSize(sf::Vector2f(512, 512));
-        body.setPosition(300, 600);
+        sprite.setOrigin(256, 256);
         body.setOrigin(256, 256);
+        sprite.setPosition(x0, y0);
+        body.setPosition(x0, y0);
+        sprite.scale(0.1, 0.1);
         body.scale(0.1, 0.1);
         body.setFillColor(sf::Color::Green);
-        x = sprite.getPosition().x;// + (sprite.getOrigin().x)/5;
-        y = sprite.getPosition().y;// + (sprite.getOrigin().y)/5;
+
+        cur_hp.setPosition(30 + type * 960, 1085);
+        max_hp.setPosition(30 + type * 960, 1085);
+        cur_hp.setSize(sf::Vector2f(500, 30));
+        max_hp.setSize(sf::Vector2f(500, 30));
+        cur_hp.setFillColor(sf::Color::Green);
+        max_hp.setFillColor(sf::Color::Red);
+
+        //x = sprite.getPosition().x;// + (sprite.getOrigin().x)/5;
+        //y = sprite.getPosition().y;// + (sprite.getOrigin().y)/5;
+        x = x0;
+        y = y0;
         a = a0;
         b = b0;
         double ang1 = acos(a);
@@ -417,6 +455,7 @@ public:
     void hit(int damage)
     {
         hp -= damage;
+        cur_hp.setScale(hp/100.0, 1);
         if(hp <= 0)
         {
             sprite.setTexture(texture_explode);
@@ -438,6 +477,8 @@ public:
     void draw()
     {
         window.draw(sprite);
+        window.draw(max_hp);
+        window.draw(cur_hp);
         //window.draw(body);
     }
 
@@ -526,9 +567,30 @@ public:
             b_x = x + a * l;
             b_y = y + b * l;
 
-            bullets.push_back(Bullet(1, b_x, b_y, a, b));
+            bullets.push_back(Bullet(type, b_x, b_y, a, b));
             time = clock();
         }
+    }
+
+    void action(const string &s)
+    {
+        elp_t();
+
+        elp = 0;
+        for(int i = 1; i <= 4; i++)
+            elp = (elp * 256) + s[i];
+        elp = elp / 1e5;
+
+        if(s[0] == 'l')
+            rotate_left();
+        if(s[0] == 'r')
+            rotate_right();
+        if(s[0] == 'u')
+            move(1);
+        if(s[0] == 'w')
+            move(-1);
+        if(s[0] == 's')
+            fire();
     }
 
     void action()
@@ -590,8 +652,9 @@ int main()
     //freopen("output.out", "w", stdout);
     //freopen("input.in", "w", stdout);
 
-    texture_bullet_1.loadFromFile("Bullets.png");
-    texture_tank_1.loadFromFile("Tank.png");
+    texture_bullets_1.loadFromFile("Bullets.png");
+    texture_tank[0].loadFromFile("Tank1.png");
+    texture_tank[1].loadFromFile("Tank2.png");
     texture_explode.loadFromFile("Explode.png");
 
     circle.setPosition(960, 500);
@@ -630,7 +693,10 @@ int main()
 
     //cout << cos(45) << " " << cos(M_PI/)
 
-    Tank tank;
+    //Tank tank;
+    vector <Tank> tanks;
+    tanks.push_back(Tank(0, 0, 300, 600, 0, 1));
+    tanks.push_back(Tank(1, 1, 1220, 600, 0, 1));
     //Bullet bullet;
 
     while(window.isOpen())
@@ -646,8 +712,9 @@ int main()
               //  window.sbool exist = true;etSize(event.size.width, event.size.height);
         }
 
-        if(tank.exist == true)
-            tank.action();
+        for(int i = 0; i < tanks.size(); i++)
+            if(tanks[i].exist == true)
+                tanks[i].action();
         //bullet.action();
         //if(bullets.begin() != bullets.end())
           //  cout << "Hi\n";
@@ -656,8 +723,9 @@ int main()
             auto cur_it = it;
             it++;
             cur_it->action();
-            if((cur_it->exist) == true && tank.exist == true)
-                hit_check(tank, *cur_it);
+            for(int i = 0; i < tanks.size(); i++)
+                if((cur_it->exist) == true && tanks[i].exist == true)
+                    hit_check(tanks[i], *cur_it);
             if((cur_it->exist) == false)
             {
                 //cout << "Hi\n";
@@ -692,7 +760,8 @@ int main()
         window.draw(circle);
         for(int i = 0; i < n; i++)
             window.draw(walls[i]);
-        tank.draw();
+        for(int i = 0; i < tanks.size(); i++)
+            tanks[i].draw();
         for(auto it = bullets.begin(); it != bullets.end(); it++)
             it->draw();
         //window.draw(sprite);
