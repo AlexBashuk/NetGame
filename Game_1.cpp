@@ -71,8 +71,8 @@ int main()
     size_t bytesRead_ = 0;
     char buffer_ [10000] = {0};
 
-    client.recive(beffer_, 10000, bytesRead_);
-    status = socket.receive(buffer, 10000, bytesRead);
+    //client.recive(beffer_, 10000, bytesRead_);
+    status = client.receive(buffer_, 10000, bytesRead_);
     if(status != sf::Socket::Done)
     {
         std::cout << "Error rececive!" << endl;

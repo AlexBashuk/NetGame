@@ -31,7 +31,7 @@ sf::Texture texture_explode;
 const int width = 1920;
 const int height = 1200;
 
-sf::RenderWindow window(sf::VideoMode(width, height), "Tanks");
+//sf::RenderWindow window(sf::VideoMode(width, height), "Tanks");
 sf::CircleShape circle(100);
 vector <sf::RectangleShape> walls;
 /*sf::Image image;
@@ -307,7 +307,7 @@ public:
 
     void draw()
     {
-        window.draw(sprite);
+        //window.draw(sprite);
     }
 
     bool check_walls()
@@ -348,6 +348,23 @@ public:
             //if(abs(x - sprite.getPosition().x) >= 1e-3 || abs(y - sprite.getPosition().y) >= 1e-3)
               //  cout << x << " " << y << " " << sprite.getPosition().x << " " << sprite.getPosition().y << endl;
         }
+    }
+
+    string data()
+    {
+        string data_ = "B;";
+        data_ += to_string(type);
+        data_ += ';';
+        data_ += to_string(x);
+        data_ += ';';
+        data_ += to_string(y);
+        data_ += ';';
+        data_ += to_string(a);
+        data_ += ';';
+        data_ += to_string(b);
+        data_ += ';';
+
+        return data_;
     }
 };
 list <Bullet> bullets;
@@ -413,7 +430,7 @@ public:
         //cout << x << " " << y << endl;
     }
 
-    Tank(int num0, int type0, double x0, double y0, double a0, double b0)
+    Tank(int num0, int type0, double x0, double y0, double a0, double b0, int hp0)
     {
         /*if(type == 0)
             texture.loadFromFile("Tank.png");
@@ -421,6 +438,7 @@ public:
             texture.loadFromFile("Tank2.png");*/
         num = num0;
         type = type0;
+        hp = hp0;
         sprite.setTexture(texture_tank[type]);
         body.setSize(sf::Vector2f(512, 512));
         sprite.setOrigin(256, 256);
@@ -476,9 +494,9 @@ public:
 
     void draw()
     {
-        window.draw(sprite);
-        window.draw(max_hp);
-        window.draw(cur_hp);
+        //window.draw(sprite);
+        //window.draw(max_hp);
+        //window.draw(cur_hp);
         //window.draw(body);
     }
 
@@ -572,24 +590,40 @@ public:
         }
     }
 
-    void action(const string &s)
+    void action(char *s)
     {
         elp_t();
 
-        elp = 0;
+        /*elp = 0;
         for(int i = 1; i <= 4; i++)
             elp = (elp * 256) + s[i];
-        elp = elp / 1e5;
+        elp = elp / 1e5;*/
 
-        if(s[0] == 'l')
+        if(s[1] == '1')
+        {
             rotate_left();
-        if(s[0] == 'r')
+            if(check_walls())
+                rotate_right();
+        }
+        if(s[2] == '1')
+        {
             rotate_right();
-        if(s[0] == 'u')
-            move(1);
-        if(s[0] == 'w')
-            move(-1);
-        if(s[0] == 's')
+            if(check_walls())
+                rotate_left();
+        }
+        if(s[3] == '1')
+        {
+            move(1);//move_forward();
+            if(check_walls())
+                move(-1);//move_backward();
+        }
+        if(s[4] == '1')
+        {
+            move(-1);//move_backward();
+            if(check_walls())
+                move(1);//move_forward();
+        }
+        if(s[5] == '1')
             fire();
     }
 
@@ -623,6 +657,27 @@ public:
         }
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             fire();
+    }
+
+    string data()
+    {
+        string data_ = "T;";
+        data_ += to_string(num);
+        data_ += ';';
+        data_ += to_string(type);
+        data_ += ';';
+        data_ += to_string(x);
+        data_ += ';';
+        data_ += to_string(y);
+        data_ += ';';
+        data_ += to_string(a);
+        data_ += ';';
+        data_ += to_string(b);
+        data_ += ';';
+        data_ += to_string(hp);
+        data_ += ';';
+
+        return data_;
     }
 };
 
@@ -694,15 +749,23 @@ int main()
     //cout << cos(45) << " " << cos(M_PI/)
 
     //Tank tank;
+    int tanks_num = 0;
     vector <Tank> tanks;
-    tanks.push_back(Tank(0, 0, 300, 600, 0, 1));
-    tanks.push_back(Tank(1, 1, 1220, 600, 0, 1));
+    //tanks.push_back(Tank(0, 0, 300, 600, 0, 1));
+    //tanks.push_back(Tank(1, 1, 1220, 600, 0, 1));
     //Bullet bullet;
 
-    while(window.isOpen())
-    {
+    sf::TcpListener listener;
 
-        sf::Event event;
+    // bind the listener to a port
+    if (listener.listen(53000) != sf::Socket::Done)
+    {
+        cout << "Listen Error\n";
+    }
+
+    while(true)
+    {
+        /*sf::Event event;
         while(window.pollEvent(event))
         {
             if(event.type == sf::Event::Closed)
@@ -710,11 +773,61 @@ int main()
 
             //if(event.type == sf::Event::Resized)
               //  window.sbool exist = true;etSize(event.size.width, event.size.height);
+        }*/
+
+        // accept a new connection
+        sf::TcpSocket socket;
+        if (listener.accept(socket) != sf::Socket::Done)
+        {
+            cout << "Accept Error\n";
+            break;
         }
 
-        for(int i = 0; i < tanks.size(); i++)
+        size_t bytesRead = 0;
+        char buffer [100010] = {0};
+        sf::Socket::Status status = socket.receive(buffer, 100010, bytesRead);
+        if(status != sf::Socket::Done)
+        {
+            std::cout << "Error rececive!" << endl;
+            continue;
+        }
+        else
+        {
+            if(buffer[0] == -1)
+            {
+                cout << "New tank\n";
+                tanks.push_back(Tank(tanks_num, tanks_num, 300, 600, 0, 1, 100));
+                string data;
+                data += char(tanks_num); //to_string(tanks_num);
+                socket.send(data.c_str(), data.length());
+                buffer[0] = tanks_num;
+                tanks_num++;
+                cout << "New tank added\n";
+
+                size_t bytesRead_ = 0;
+                char buffer_ [100010] = {0};
+                sf::Socket::Status status = socket.receive(buffer_, 100010, bytesRead_);
+                if(status != sf::Socket::Done)
+                {
+                    std::cout << "Error rececive!" << endl;
+                    continue;
+                }
+                else
+                {
+                    string check_str(buffer_);
+                    if(check_str != "Number got")
+                        cout << "It's bad\n";
+                }
+            }
+        }
+        //string s_buffer(buffer);
+        //if(s_buffer.size() >= 6 && s_buffer != "000000")
+            //cout << s_buffer << endl;
+        tanks[buffer[0]].action(buffer);
+
+        /*for(int i = 0; i < tanks.size(); i++)
             if(tanks[i].exist == true)
-                tanks[i].action();
+                tanks[i].action();*/
         //bullet.action();
         //if(bullets.begin() != bullets.end())
           //  cout << "Hi\n";
@@ -732,6 +845,13 @@ int main()
                 bullets.erase(cur_it);
             }
         }
+
+        string data;
+        for(int i = 0; i < tanks.size(); i++)
+            data += tanks[i].data();
+        for(auto it = bullets.begin(); it != bullets.end(); it++)
+            data += it->data();
+        socket.send(data.c_str(), data.length());
 
         /*if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
         {
@@ -756,7 +876,7 @@ int main()
             tank.move_backward();
         }*/
 
-        window.clear(sf::Color::White);
+        /*window.clear(sf::Color::White);
         window.draw(circle);
         for(int i = 0; i < n; i++)
             window.draw(walls[i]);
@@ -766,7 +886,7 @@ int main()
             it->draw();
         //window.draw(sprite);
         //bullet.draw();
-        window.display();
+        window.display();*/
     }
 
     return 0;
